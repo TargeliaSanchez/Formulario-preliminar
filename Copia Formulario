@@ -1,0 +1,261 @@
+import streamlit as st
+
+# Configuración de la página
+st.set_page_config(layout="wide")
+st.title("📋 EVALUAR – BPS")
+
+# --- Estilos CSS ---
+st.markdown("""
+<style>
+    .question {
+        padding: 0.2rem 0;
+        border-bottom: 1px solid #eee;
+    }
+    .question-number {
+        font-weight: bold;
+        color: #2a9d8f;
+    }
+    .section {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 0.5rem;
+    }
+    .section-title {
+        color: #264653;
+        font-weight: 500;
+        font-size: 0.1rem;
+        margin: 0.1rem 0 0.25rem 0 !important;
+    }
+    .subsection-title {
+        color: #2a9d8f;
+        font-weight: 500;
+        margin: 0.5rem 0 0.5rem 0;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem !important;
+    }
+    .rating-tag {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        margin-left: 0.5rem;
+        vertical-align: middle;
+        font-weight: bold;
+    }
+    .no-cumple { background-color: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+    .incipiente { background-color: #fff8e1; color: #f57f17; border: 1px solid #ffcc80; }
+    .aceptable { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+    .satisfactorio { background-color: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+    .optimo { background-color: #f1f8e9; color: #33691e; border: 1px solid #c5e1a5; }
+    .dimension-rating {
+        background-color: #e3f2fd;
+        padding: 1.5rem 1.5rem;
+        border-radius: 8px;
+        margin: 0.5rem 0;
+        font-weight: bold;
+    }
+    .nav-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.1rem;
+    }
+    .progress-container {
+        margin: 0.1rem 0;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- Estado de la sesión ---
+if 'current_main_dim' not in st.session_state:
+    st.session_state.current_main_dim = 0
+if 'current_sub_dim' not in st.session_state:
+    st.session_state.current_sub_dim = 0
+
+# Opciones del selectbox
+opciones = [
+    ("1 - No cumple", 1),
+    ("2 - Incipiente", 2),
+    ("3 - Aceptable", 3),
+    ("4 - Satisfecho", 4),
+    ("5 - Óptimo", 5)
+]
+# Determinar calificación
+def determinar_calificacion(respuestas):
+    # Filtra solo respuestas numéricas (ignora strings/texto)
+    valores = []
+    for resp in respuestas:
+        if isinstance(resp, tuple) and isinstance(resp[1], int):  # Si es opción (texto, valor)
+            valores.append(resp[1])
+        elif isinstance(resp, int):  # Si es directamente un número
+            valores.append(resp)
+
+    if not valores:  # Si no hay valores numéricos
+        return ("Sin calificación", "sin-calificacion", 0)
+
+    # Lógica original de calificación
+    if all(v == 5 for v in valores):
+        return ("5. Óptimo", "optimo", 5)
+    elif all(v == 1 for v in valores):
+        return ("1. No cumple", "no-cumple", 1)
+    elif sum(v >= 4 for v in valores) >= 3:
+        return ("4. Satisfactorio", "satisfactorio", 4)
+    elif sum(v >= 3 for v in valores) >= 3:
+        return ("3. Aceptable", "aceptable", 3)
+    elif any(v == 2 for v in valores):
+        return ("2. Incipiente", "incipiente", 2)
+    else:
+        return ("1. No cumple", "no-cumple", 1)
+
+# --- Estructura de datos ---
+dimensiones = {
+    "D1. ORGANIZACIÓN Y GESTIÓN DE LOS SERVICIOS DE REHABILITACIÓN": {
+        "D1.1 La oferta de servicios de rehabilitación corresponde con el nivel de complejidad de la institución. ►": [
+            {"texto": "La institución presta servicio de psicología y/o trabajo social", "key": "pD11_1"},
+            {"texto": "La institución presta servicios de fisioterapia, fonoaudiología y/o terapia ocupacional", "key": "pD11_2"},
+            {"texto": "Los servicios de rehabilitación disponibles corresponden con el nivel de complejidad.*", "key": "pD11_3"},
+            {"texto": "Los servicios de rehabilitación se organizan en un área específica de la institución. ", "key": "pD11_4"},
+        ],
+        "D1.2 El talento humano de rehabilitación vinculado a la institución es acorde a la capacidad instalada versus la demanda de los servicios. ►": [
+            {"texto": "Los servicios de rehabilitación habilitados cuentan continuamente con profesional[es] contratado[s] o vinculado[s]. ", "key": "pD12_1"},
+            {"texto": "La disponibilidad del talento humano de rehabilitación es adecuada a la capacidad instalada versus la demanda de los servicios.", "key": "pD12_2"},
+            {"texto": "La institución define el perfil del talento humano de rehabilitación según las necesidades de atención de los usuarios. ", "key": "pD12_3"},
+            {"texto": "La institución designa un líder, coordinador o jefe de los servicios de rehabilitación. ", "key": "pD12_4"},
+        ]
+        ,
+        "D1.3 La prestación de los servicios de rehabilitación se realiza en diferentes modalidades: intramural, extramural y/o telemedicina.": [
+            {"texto": "Se prestan servicios de rehabilitación en modalidad ambulatoria y/o hospitalaria [si aplica].", "key": "pD13_1"},
+            {"texto": "Se prestan servicios de rehabilitación en modalidad domiciliaria u otras modalidades extramurales [están definidos los criterios para la atención en esta modalidad].", "key": "pD13_2"},
+            {"texto": "Se prestan servicios de rehabilitación en la modalidad de telemedicina.", "key": "pD13_3"},
+            {"texto": "La prestación de servicios en la modalidad de telemedicina incluye especialidades médicas relacionadas con rehabilitación.", "key": "pD13_4"},
+        ],
+"D3.3 Se mide la satisfacción de los usuarios con la atención recibida en los servicios de rehabilitación.": [
+    {"texto": "Al finalizar el proceso de rehabilitación se mide la satisfacción de los usuarios.", "key": "pD218_1"},
+    {"texto": "La medición de la satisfacción de los usuarios es estandarizada y los resultados se expresan en datos numéricos y/o categorías ordinales. ", "key": "pD218_2"},
+    {"texto": "La evaluación de la satisfacción verifica la percepción de los usuarios sobre la oportunidad, seguridad, pertinencia y resultados de la atención.", "key": "pD218_3"},
+    {"texto": "Los resultados de la satisfacción de los usuarios se consolidan, analizan y los resultados dan lugar a acciones de mejora.", "key": "pD218_4"}
+]
+    }
+}
+
+
+# --- Navegación  1---
+main_dim_keys = list(dimensiones.keys())
+current_main_dim = main_dim_keys[st.session_state.current_main_dim]
+sub_dim_keys = list(dimensiones[current_main_dim].keys())
+current_sub_dim = sub_dim_keys[st.session_state.current_sub_dim]
+
+# --- Mostrar progreso ---
+total_main_dims = len(main_dim_keys)
+total_sub_dims = len(sub_dim_keys)
+current_progress = (st.session_state.current_main_dim + (st.session_state.current_sub_dim + 1)/total_sub_dims) / total_main_dims
+
+st.markdown(f"""
+<div class="progress-container">
+    <strong></strong>
+    Dimensión {st.session_state.current_main_dim + 1}/{total_main_dims} •
+    Pregunta {st.session_state.current_sub_dim + 1}/{total_sub_dims}
+</div>
+""", unsafe_allow_html=True)
+st.progress(current_progress)
+
+
+
+# --- Contenido principal ---
+st.markdown(f'<div class="section"><h2 class="section-title">{current_main_dim}</h2></div>', unsafe_allow_html=True)
+st.markdown(f'<div class="subsection-title">{current_sub_dim}</div>', unsafe_allow_html=True)
+
+# Mostrar todas las preguntas de la subdimensión actual
+preguntas = dimensiones[current_main_dim][current_sub_dim]
+for pregunta in preguntas:
+    if pregunta["key"] not in st.session_state:
+        st.session_state[pregunta["key"]] = "" if pregunta.get("tipo") == "texto" else opciones[0]
+
+    col1, col2= st.columns([3, 1])
+    with col1:
+        st.markdown(f'<div class="question">{pregunta["texto"]}</div>', unsafe_allow_html=True)
+    with col2:
+        st.session_state[pregunta["key"]] = st.selectbox(
+            "",
+            options=opciones,
+            format_func=lambda x: x[0],
+            key=pregunta["key"]+"_select",
+            label_visibility="collapsed"
+        )
+
+
+# Primero creamos un contenedor principal
+with st.container():
+    # Dividimos en dos columnas principales
+    col_calif, col_obs = st.columns([1, 5])
+
+    with col_calif:
+        # Calificación de la subdimensión
+        respuestas = [st.session_state[p["key"]] for p in preguntas]
+        calif_text, clase, calif_num = determinar_calificacion(respuestas)
+        st.markdown(
+            f'<div class="dimension-rating">Calificación {current_sub_dim.split()[0]}: '
+            f'<span class="rating-tag {clase}">{calif_text}</span></div>',
+            unsafe_allow_html=True
+        )
+
+    with col_obs:
+        # Observaciones (ajustado para mejor visualización)
+        obs_key = f"obs_{current_sub_dim.replace(' ', '_')}"
+        st.markdown("**Observaciones**", help="Comentarios adicionales sobre esta dimensión")
+        st.session_state[obs_key] = st.text_area(
+            "",
+            value=st.session_state.get(obs_key, ""),
+            key=f"{obs_key}_text",
+            label_visibility="collapsed",
+            height=70
+        )
+
+# --- Navegación  2---
+st.markdown('<div class="nav-buttons">', unsafe_allow_html=True)
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    # Botón Anterior
+    if st.session_state.current_sub_dim > 0:
+        if st.button("⏮ pregunta anterior"):
+            st.session_state.current_sub_dim -= 1
+            st.rerun()
+    elif st.session_state.current_main_dim > 0:
+        if st.button("⏮ Dimensión anterior"):
+            st.session_state.current_main_dim -= 1
+            st.session_state.current_sub_dim = len(dimensiones[main_dim_keys[st.session_state.current_main_dim]]) - 1
+            st.rerun()
+
+with col2:
+    # Botón Siguiente
+    if st.session_state.current_sub_dim < len(sub_dim_keys) - 1:
+        if st.button("⏭ Siguiente pregunta"):
+            st.session_state.current_sub_dim += 1
+            st.rerun()
+    elif st.session_state.current_main_dim < len(main_dim_keys) - 1:
+        if st.button("⏭ Siguiente dimensión"):
+            st.session_state.current_main_dim += 1
+            st.session_state.current_sub_dim = 0
+            st.rerun()
+    else:
+        if st.button("💾 Guardar evaluación completa"):
+            st.balloons()
+            st.success("Evaluación completada y guardada")
+
+            # Generar reporte (ejemplo)
+            reporte = {}
+            for dim, subdims in dimensiones.items():
+                reporte[dim] = {}
+                for subdim, preguntas in subdims.items():
+                    respuestas = [st.session_state[p["key"]] for p in preguntas]
+                    calif_text, clase, calif_num = determinar_calificacion(respuestas)
+                    reporte[dim][subdim] = {
+                        "puntaje": calif_num,
+                        "calificacion": calif_text,
+                        "respuestas": [r[1] for r in respuestas]
+                    }
+
+            st.json(reporte)  # Mostrar resultados (puedes guardar en DB después)
+
+st.markdown('</div>', unsafe_allow_html=True)
