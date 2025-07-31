@@ -141,16 +141,18 @@ for i in range(1, 8):
     with col_dias:
         st.markdown("<div style='text-align: center;'><b>Días de atención</b></div>", unsafe_allow_html=True)
         st.markdown("Marque con una X los días de atención")
-        col1, col2, col3, col4, col5, col6, col7 = st.columns([1, 1, 1.2, 1, 1, 1, 1])
-        for i in range(1, 8):
-            for dia in ["L", "M", "Mi", "J", "V", "S", "D"]:
+        col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+        dias = ["L", "M", "Mi", "J", "V", "S", "D"]
+        cols = [col1, col2, col3, col4, col5, col6, col7]
+        for col, dia in zip(cols, dias):
+            with col:
+                st.markdown(f"**{dia}**")
                 valor = st.checkbox(
-                    f"{dia} Servicio {i}",
+                    "",  # sin texto largo
                     value=st.session_state.respuestas.get(f"{dia}_{i}", False),
                     key=f"{dia}_{i}"
                 )
                 guardar_respuesta(f"{dia}_{i}", valor)
-        
     with sep1:
         st.markdown("<div class='vertical-divider'></div>", unsafe_allow_html=True)
     with col_areas:
@@ -216,7 +218,11 @@ for i in range(1, 8):
         st.markdown("marque con una X el tipo de prestador")
         prestador = st.radio("Tipo", ["P.REM", "P.REF"], key=f"prestador_{i}")
         guardar_respuesta(f"prestador_{i}", prestador)
-        
+
+
+
+
+
 # --- Estructura de datos ---
 dimensiones = {
     "D1. ORGANIZACIÓN Y GESTIÓN DE LOS SERVICIOS DE REHABILITACIÓN": {
