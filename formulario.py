@@ -67,15 +67,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-for i in range(1, 8):
-    for dia in ["L", "M", "Mi", "J", "V", "S", "D"]:
-        valor = st.checkbox(
-            f"{dia} Servicio {i}",
-            value=st.session_state.respuestas.get(f"{dia}_{i}", False),
-            key=f"{dia}_{i}"
-        )
-        guardar_respuesta(f"{dia}_{i}", valor)
-
 # --- Estado de la sesión ---
 if 'current_main_dim' not in st.session_state:
     st.session_state.current_main_dim = 0
@@ -151,34 +142,15 @@ for i in range(1, 8):
         st.markdown("<div style='text-align: center;'><b>Días de atención</b></div>", unsafe_allow_html=True)
         st.markdown("Marque con una X los días de atención")
         col1, col2, col3, col4, col5, col6, col7 = st.columns([1, 1, 1.2, 1, 1, 1, 1])
-        with col1:
-            st.markdown(f"**L**")
-            dia_L = st.checkbox("", key=f"L_{i}")
-            guardar_respuesta(f"L_{i}", dia_L)
-        with col2:
-            st.markdown(f"**M**")
-            dia_M = st.checkbox("", key=f"M_{i}")
-            guardar_respuesta(f"M_{i}", dia_M)
-        with col3:
-            st.markdown(f"**Mi**")
-            dia_Mi = st.checkbox("", key=f"Mi_{i}")
-            guardar_respuesta(f"Mi_{i}", dia_Mi)
-        with col4:
-            st.markdown(f"**J**")
-            dia_J = st.checkbox("", key=f"J_{i}")
-            guardar_respuesta(f"J_{i}", dia_J)
-        with col5:
-            st.markdown(f"**V**")
-            dia_V = st.checkbox("", key=f"V_{i}")
-            guardar_respuesta(f"V_{i}", dia_V)
-        with col6:
-            st.markdown(f"**S**")
-            dia_S = st.checkbox("", key=f"S_{i}")
-            guardar_respuesta(f"S_{i}", dia_S)
-        with col7:
-            st.markdown(f"**D**")
-            dia_D = st.checkbox("", key=f"D_{i}")
-            guardar_respuesta(f"D_{i}", dia_D)
+    for i in range(1, 8):
+        for dia in ["L", "M", "Mi", "J", "V", "S", "D"]:
+            valor = st.checkbox(
+                f"{dia} Servicio {i}",
+                value=st.session_state.respuestas.get(f"{dia}_{i}", False),
+                key=f"{dia}_{i}"
+            )
+            guardar_respuesta(f"{dia}_{i}", valor)
+        
     with sep1:
         st.markdown("<div class='vertical-divider'></div>", unsafe_allow_html=True)
     with col_areas:
