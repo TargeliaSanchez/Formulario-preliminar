@@ -81,6 +81,12 @@ opciones = [
     ("5 - Óptimo", 5)
 ]
 
+def guardar_respuesta(key, value):
+    if "respuestas" not in st.session_state:
+        st.session_state.respuestas = {}
+    st.session_state.respuestas[key] = value
+
+
 def determinar_calificacion(respuestas):
     # Filtra solo respuestas numéricas (ignora strings/texto)
     valores = []
