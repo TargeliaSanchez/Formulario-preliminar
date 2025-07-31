@@ -66,6 +66,16 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
+for i in range(1, 8):
+    for dia in ["L", "M", "Mi", "J", "V", "S", "D"]:
+        valor = st.checkbox(
+            f"{dia} Servicio {i}",
+            value=st.session_state.respuestas.get(f"{dia}_{i}", False),
+            key=f"{dia}_{i}"
+        )
+        guardar_respuesta(f"{dia}_{i}", valor)
+
 # --- Estado de la sesión ---
 if 'current_main_dim' not in st.session_state:
     st.session_state.current_main_dim = 0
