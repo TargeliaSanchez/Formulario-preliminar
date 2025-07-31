@@ -142,14 +142,14 @@ for i in range(1, 8):
         st.markdown("<div style='text-align: center;'><b>Días de atención</b></div>", unsafe_allow_html=True)
         st.markdown("Marque con una X los días de atención")
         col1, col2, col3, col4, col5, col6, col7 = st.columns([1, 1, 1.2, 1, 1, 1, 1])
-    for i in range(1, 8):
-        for dia in ["L", "M", "Mi", "J", "V", "S", "D"]:
-            valor = st.checkbox(
-                f"{dia} Servicio {i}",
-                value=st.session_state.respuestas.get(f"{dia}_{i}", False),
-                key=f"{dia}_{i}"
-            )
-            guardar_respuesta(f"{dia}_{i}", valor)
+        for i in range(1, 8):
+            for dia in ["L", "M", "Mi", "J", "V", "S", "D"]:
+                valor = st.checkbox(
+                    f"{dia} Servicio {i}",
+                    value=st.session_state.respuestas.get(f"{dia}_{i}", False),
+                    key=f"{dia}_{i}"
+                )
+                guardar_respuesta(f"{dia}_{i}", valor)
         
     with sep1:
         st.markdown("<div class='vertical-divider'></div>", unsafe_allow_html=True)
